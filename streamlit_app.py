@@ -70,52 +70,47 @@ chart_type = st.sidebar.radio(
 )
 
 # 4) Affichage dynamique selon le choix
-if chart_type == "Deux graphiques côte à côte":
-    col1, col2 = st.columns(2)
-    with col1:
-        st.subheader("Population vs Consommation")
-        st.line_chart(df_plot.set_index("année")[["population", "consommation"]], height=350)
-    with col2:
-        st.subheader("CUG (m³/hab)")
-        st.line_chart(df_plot.set_index("année")[["CUG"]], height=350)
-
-elif chart_type == "Un seul graphique (ordre forcé)":
-    st.subheader("Population, Consommation et CUG (ordre personnalisé)")
-    df2 = df_plot.set_index("année")[["CUG", "population", "consommation"]]
-    st.line_chart(df2, height=450)
-
-else:  # Altair dual-axis
+elif chart_type == "Altair dual-axis":
     st.subheader("Altair: Population/Consommation vs CUG (double axe)")
     # Passage en format long
     dfm = df_plot.melt("année", var_name="metric", value_name="value")
 
-    base = alt.Chart(dfm).encode(x=alt.X("année:O", axis=alt.Axis(title="Année")))
+    base = alt.Chart(dfm).encode(
+        x=alt.X("année:O", axis=alt.Axis(title="Année"))
+    )
 
+    # Couche population + consommation (axe Y gauche)
     pop_cons = (
         base.transform_filter(
-            alt.FieldOneOfPredicate(field="metric", oneOf=["population", "consommation"])
+            alt.FieldOneOfPredicate(field="metric",
+                                    oneOf=["population", "consommation"])
         )
         .mark_line()
         .encode(
-            y=alt.Y("value:Q", axis=alt.Axis(title="Population / Consommation")),
+            y=alt.Y(
+                "value:Q",
+                axis=alt.Axis(title="Population / Consommation", orient="left")
+            ),
             color=alt.Color("metric:N", legend=alt.Legend(title="")),
         )
     )
 
+    # Couche CUG (axe Y droite)
     cug = (
         base.transform_filter(
             alt.FieldEqualPredicate(field="metric", equal="CUG")
         )
         .mark_line(strokeDash=[5, 5], size=2)
         .encode(
-            y=alt.Y("value:Q", axis=alt.Axis(title="CUG (m³/hab)", titleColor="steelblue"), axisY=alt.Y2()),
+            y=alt.Y(
+                "value:Q",
+                axis=alt.Axis(title="CUG (m³/hab)", orient="right")
+            ),
             color=alt.value("steelblue"),
         )
     )
 
+    # Superposer et résoudre les échelles Y indépendamment
     chart = alt.layer(pop_cons, cug).resolve_scale(y="independent")
-    st.altair_chart(chart, use_container_width=True)
 
-# 5) Bouton d’export CSV
-csv = df_plot.to_csv(index=False).encode("utf-8")
-st.download_button("Exporter les données", csv, file_name="previsions_cug.csv")
+    st.altair_chart(chart, use_container_width=True)
