@@ -1,6 +1,6 @@
-streamlit
-pandas
-numpy
-statsmodels
-scikit-learn
-openpyxl
+streamlit 
+pandas 
+numpy 
+statsmodels 
+scikit-learn 
+openpyxl 
