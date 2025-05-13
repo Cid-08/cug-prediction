@@ -55,7 +55,22 @@ def make_forecasts(filepath):
 df_plot = make_forecasts("données consommations eau.xlsx")
 
 st.subheader("Évolution CUG, population et consommation (1997–2030)")
-st.line_chart(df_plot.set_index('année')[['population', 'CUG', 'consommation']])
+# Après avoir produit `df_plot`
+col1, col2 = st.columns(2)
+
+with col1:
+    st.subheader("Population vs Consommation")
+    st.line_chart(
+        df_plot.set_index("année")[["population", "consommation"]],
+        height=350
+    )
+
+with col2:
+    st.subheader("CUG (m³/habitant)")
+    st.line_chart(
+        df_plot.set_index("année")[["CUG"]],
+        height=350
+    )
 
 csv = df_plot.to_csv(index=False).encode('utf-8')
 st.download_button("Exporter les données", csv, file_name="previsions_cug.csv")
